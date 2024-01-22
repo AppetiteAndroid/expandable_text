@@ -63,7 +63,7 @@ List<TextSegment> parseText(String? text, {List<Mention>? customMention}) {
 
       final isHashtag = keyword.startsWith('#');
       var reg = RegExp(r"\[id:\d+\]");
-      bool isMention = keyword.contains(reg) | keyword.startsWith('@');
+      bool isMention = customMention != null ? keyword.contains(reg) : keyword.contains(reg) | keyword.startsWith('@');
       final matched = reg.firstMatch(keyword);
       String id = keyword.substring(1);
       if (matched != null && isMention) {
