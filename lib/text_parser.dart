@@ -1,3 +1,5 @@
+import 'package:expandable_text/expandable_text.dart';
+
 class TextSegment {
   String text;
 
@@ -8,37 +10,22 @@ class TextSegment {
 
   bool get isText => !isHashtag && !isMention && !isUrl;
 
-  TextSegment(this.text,
-      [this.name,
-      this.isHashtag = false,
-      this.isMention = false,
-      this.isUrl = false]);
+  TextSegment(this.text, [this.name, this.isHashtag = false, this.isMention = false, this.isUrl = false]);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TextSegment &&
-          runtimeType == other.runtimeType &&
-          text == other.text &&
-          name == other.name &&
-          isHashtag == other.isHashtag &&
-          isMention == other.isMention &&
-          isUrl == other.isUrl;
+      other is TextSegment && runtimeType == other.runtimeType && text == other.text && name == other.name && isHashtag == other.isHashtag && isMention == other.isMention && isUrl == other.isUrl;
 
   @override
-  int get hashCode =>
-      text.hashCode ^
-      name.hashCode ^
-      isHashtag.hashCode ^
-      isMention.hashCode ^
-      isUrl.hashCode;
+  int get hashCode => text.hashCode ^ name.hashCode ^ isHashtag.hashCode ^ isMention.hashCode ^ isUrl.hashCode;
 }
 
 /// Split the string into multiple instances of [TextSegment] for mentions, hashtags, URLs and regular text.
 ///
 /// Mentions are all words that start with @, e.g. @mention.
 /// Hashtags are all words that start with #, e.g. #hashtag.
-List<TextSegment> parseText(String? text) {
+List<TextSegment> parseText(String? text, {List<Mention>? customMention}) {
   final segments = <TextSegment>[];
 
   if (text == null || text.isEmpty) {
@@ -46,9 +33,9 @@ List<TextSegment> parseText(String? text) {
   }
 
   // parse urls and words starting with @ (mention) or # (hashtag)
-  RegExp exp = RegExp(
-      r'(?<keyword>(#|@)([\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Connector_Punctuation}\p{Join_Control}]+)|(?<url>(?:(?:https?|ftp):\/\/)?[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9]{1,6}(\/[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?))',
-      unicode: true);
+  var pattern =
+      r'(?<keyword>([id:\d+\])|(#|@)([\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Connector_Punctuation}\p{Join_Control}]+)|(?<url>(?:(?:https?|ftp):\/\/)?[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9]{1,6}(\/[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?))';
+  RegExp exp = RegExp(pattern, unicode: true);
   final matches = exp.allMatches(text);
 
   var start = 0;
@@ -69,17 +56,38 @@ List<TextSegment> parseText(String? text) {
     if (url != null) {
       segments.add(TextSegment(url, url, false, false, true));
     } else if (keyword != null) {
-      final isWord = match.start == 0 ||
-          [' ', '\n'].contains(text.substring(match.start - 1, start));
+      final isWord = match.start == 0 || [' ', '\n'].contains(text.substring(match.start - 1, start));
       if (!isWord) {
         return;
       }
 
       final isHashtag = keyword.startsWith('#');
-      final isMention = keyword.startsWith('@');
-
-      segments.add(
-          TextSegment(keyword, keyword.substring(1), isHashtag, isMention));
+      var reg = RegExp(r"\[id:\d+\]");
+      bool isMention = customMention != null ? keyword.contains(reg) : keyword.startsWith('@');
+      final matched = reg.firstMatch(keyword);
+      String id = keyword.substring(1);
+      if (matched != null && customMention != null && isMention) {
+        if (matched.end != keyword.length) {
+          id = keyword.substring(0, matched.end).replaceAll(RegExp(r'\[|\]'), "").split(':').last;
+        } else {
+          id = keyword.replaceAll(RegExp(r'\[|\]'), '').split(':').last;
+        }
+        String name = keyword;
+        final index = customMention.indexWhere((element) => element.id.toString() == id);
+        if (index >= 0) {
+          name = customMention.firstWhere((element) => element.id.toString() == id).name;
+        } else {
+          name = 'User';
+          id = "-1";
+          isMention = false;
+        }
+        segments.add(TextSegment(name, id, isHashtag, isMention));
+        if (matched.end != keyword.length) {
+          segments.add(TextSegment(keyword.substring(matched.end), '', false, false));
+        }
+      } else {
+        segments.add(TextSegment(keyword, id, isHashtag, isMention));
+      }
     }
 
     start = match.end;
