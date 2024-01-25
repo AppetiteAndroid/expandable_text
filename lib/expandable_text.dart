@@ -230,7 +230,15 @@ class ExpandableTextState extends State<ExpandableText> with TickerProviderState
 
           final text = _textSegments.isNotEmpty
               ? TextSpan(
-                  children: _buildTextSpans(_expanded ? _textSegments : parseText(widget.text.substring(0, max(endOffset, 0))), effectiveTextStyle!, recognizer),
+                  children: _buildTextSpans(
+                      _expanded
+                          ? _textSegments
+                          : parseText(
+                              widget.text.substring(0, max(endOffset, 0)),
+                              customMention: widget.customMention,
+                            ),
+                      effectiveTextStyle!,
+                      recognizer),
                 )
               : TextSpan(
                   text: _expanded ? widget.text : widget.text.substring(0, max(endOffset, 0)),
