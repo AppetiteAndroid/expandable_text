@@ -34,7 +34,8 @@ List<TextSegment> parseText(String? text, {List<Mention>? customMention}) {
 
   // parse urls and words starting with @ (mention) or # (hashtag)
   var pattern =
-      r'(?<keyword>([id:\d+\])|(#|@)([\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Connector_Punctuation}\p{Join_Control}]+)|(?<url>(?:(?:https?|ftp):\/\/)?[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9]{1,6}(\/[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?))';
+      r'((?<keyword>(\[id:\d+\])|((#|@)([\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Connector_Punctuation}\p{Join_Control}]+)))|(?<url>(?:(?:https?|ftp):\/\/)?[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9]{1,6}(\/[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?))';
+
   RegExp exp = RegExp(pattern, unicode: true);
   final matches = exp.allMatches(text);
 
