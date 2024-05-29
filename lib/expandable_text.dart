@@ -112,6 +112,7 @@ class ExpandableTextState extends State<ExpandableText> with TickerProviderState
     if (oldWidget.expanded != widget.expanded) {
       setState(() => _expanded = !_expanded);
     }
+
     if (oldWidget.text != widget.text || oldWidget.onUrlTap != widget.onUrlTap || oldWidget.onHashtagTap != widget.onHashtagTap || oldWidget.onMentionTap != widget.onMentionTap) {
       _updateText();
     }
